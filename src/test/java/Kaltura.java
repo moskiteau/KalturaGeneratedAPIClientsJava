@@ -47,6 +47,8 @@ import com.kaltura.client.types.KalturaUploadedFileTokenResource;
 import com.kaltura.client.test.KalturaTestConfig;
 import com.kaltura.client.test.TestUtils;
 
+import com.kaltura.client.UploadToken;
+
 public class Kaltura {
 	
 	private static final int WAIT_BETWEEN_TESTS = 30000;
@@ -64,7 +66,7 @@ public class Kaltura {
 			list();
 			multiRequest();
 			KalturaMediaEntry entry = addEmptyEntry();
-			uploadMediaFileAndAttachToEmptyEntry(entry);
+			uploadMediaFileByChunkAndAttachToEmptyEntry(entry);
 			testIfEntryIsReadyForPublish(entry);
 			// cleanup the sample by deleting the entry:
 			deleteEntry(entry);
@@ -155,6 +157,34 @@ public class Kaltura {
 		KalturaMediaEntry newEntry = getKalturaClient().getMediaService().add(entry);
 		System.out.println("The id of our new Video Entry is: " + newEntry.id);
 		return newEntry;
+	}
+
+	/**
+	 *  uploads a video file to Kaltura and assigns it to a given Media Entry object
+	 */
+	private static void uploadMediaFileByChunkAndAttachToEmptyEntry(KalturaMediaEntry entry) throws KalturaApiException
+	{
+			KalturaClient client = getKalturaClient();			
+			System.out.println("Uploading a video file...");
+			
+			// upload upload token
+			KalturaUploadToken upToken = client.getUploadTokenService().add();
+			
+			try
+			{
+				String TAG = "test-upload-large-files";
+				UploadToken uploadToken = new UploadToken(TAG, 5, client);
+				String path = testConfig.getUploadVideo(); 	    	
+				System.out.println("Trying to upload " + path);
+	        	uploadToken.setStartUpload(true);
+        		uploadToken.uploadMediaFileAndAttachToEmptyEntry(TAG, entry, path);
+				
+				System.out.println("Uploaded a new Video file to entry: " + entry.id);
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();	
+			}
 	}
 	
 	/**
